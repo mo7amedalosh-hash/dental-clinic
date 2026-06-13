@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block title %}لوحة الاستقبال{% endblock %}
+{% block nav_links %}
+<li class="nav-item">
+    <a class="nav-link active" href="{{ url_for('reception_dashboard') }}">
+        <i class="bi bi-speedometer2"></i> المرضى
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="{{ url_for('appointments_list') }}">
+        <i class="bi bi-calendar-check"></i> المواعيد
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="{{ url_for('import_excel') }}">
+        <i class="bi bi-file-earmark-excel"></i> استيراد
+    </a>
+</li>
+{% endblock %}
+{% block role_indicator %}
+<i class="bi bi-person-lines-fill"></i> الاستقبال
+{% endblock %}
+
+{% block content %}
+{% if today_appts %}
+<div class="card border-info mb-4">
+    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-calendar-day"></i> مواعيد اليوم ({{ today_appts|length }})</h5>
+        <a href="{{ url_for('appointments_list', filter='today') }}" class="btn btn-sm btn-light">
+            عرض الكل <i class="bi bi-arrow-left"></i>
+        </a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>الوقت</th>
+                        <th>المريض</th>
+                        <th>الهاتف</th>
+                        <th>ملاحظات</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in today_appts %}
+                    <tr>
+                        <td class="fw-bold">{{ a.appointment_time|time12 }}</td>
+                        <td>
+                            <a href="{{ url_for('reception_patient_detail', patient_id=a.patient_id) }}" class="patient-name-link">
+                                {{ a.patient_name }}
+                            </a>
+                        </td>
+                        <td dir="ltr">{{ a.patient_phone or '—' }}</td>
+                        <td class="small text-muted">{{ a.notes or '' }}</td>
+                        <td>
+                            <a href="{{ url_for('add_appointment') }}?patient_id={{ a.patient_id }}"
+                               class="btn btn-sm btn-outline-primary" title="إضافة موعد جديد">
+                                <i class="bi bi-plus-circle"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-people-fill"></i> قائمة المرضى</h4>
+        <p class="text-muted mb-0 small">عرض جميع المرضى المسجلين</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ url_for('add_patient') }}" class="btn btn-primary btn-lg">
+            <i class="bi bi-plus-circle"></i> إضافة مريض جديد
+        </a>
+        <a href="{{ url_for('export_excel') }}" class="btn btn-success btn-lg">
+            <i class="bi bi-download"></i> تصدير إكسيل
+        </a>
+        <a href="{{ url_for('import_excel') }}" class="btn btn-outline-success btn-lg">
+            <i class="bi bi-file-earmark-excel"></i> استيراد
+        </a>
+    </div>
+</div>
+
+<!-- Search -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form action="{{ url_for('reception_search') }}" method="GET" class="row g-2 align-items-center">
+            <div class="col">
+                <div class="input-group input-group-lg">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                    <input type="text" name="q" class="form-control search-box border-start-0"
+                           placeholder="ابحث باسم المريض أو رقم الهاتف..." value="{{ search_query or '' }}" autofocus>
+                </div>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary btn-lg px-4"><i class="bi bi-search"></i> بحث</button>
+                {% if search_query %}
+                <a href="{{ url_for('reception_dashboard') }}" class="btn btn-outline-secondary btn-lg"><i class="bi bi-x-lg"></i></a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if patients %}
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>اسم المريض</th>
+                        <th>العمر</th>
+                        <th>الهاتف</th>
+                        <th>العنوان</th>
+                        <th>نوع العلاج</th>
+                        <th>الطبيب</th>
+                        <th>الممرضة</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in patients %}
+                    <tr>
+                        <td>{{ p.id }}</td>
+                        <td>
+                            <a href="{{ url_for('reception_patient_detail', patient_id=p.id) }}" class="patient-name-link">
+                                {{ p.name }}
+                            </a>
+                            {% if p.edit_requested == 1 %}
+                            <span class="badge bg-warning text-dark role-badge ms-1">
+                                <i class="bi bi-clock"></i> بانتظار الموافقة
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>{{ p.age or '—' }}</td>
+                        <td dir="ltr">{{ p.phone or '—' }}</td>
+                        <td class="small">{{ p.address or '—' }}</td>
+                        <td><span class="badge bg-info">{{ p.treatment_type or '—' }}</span></td>
+                        <td class="small">{{ p.doctor_name or '—' }}</td>
+                        <td class="small">{{ p.nurse_name or '—' }}</td>
+                        <td>
+                            <div class="action-bar">
+                                <a href="{{ url_for('reception_patient_detail', patient_id=p.id) }}"
+                                   class="btn btn-sm btn-outline-primary" title="عرض التفاصيل">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if p.locked == 0 %}
+                                <a href="{{ url_for('reception_edit_patient', patient_id=p.id) }}"
+                                   class="btn btn-sm btn-outline-warning" title="تعديل (مصرح به)">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% elif p.edit_requested == 0 %}
+                                <a href="{{ url_for('request_edit', patient_id=p.id) }}"
+                                   class="btn btn-sm btn-outline-secondary" title="طلب تعديل"
+                                   onclick="return confirm('هل تريد إرسال طلب تعديل للطبيب؟')">
+                                    <i class="bi bi-lock"></i>
+                                </a>
+                                {% else %}
+                                <button class="btn btn-sm btn-outline-secondary" disabled title="بانتظار موافقة الطبيب">
+                                    <i class="bi bi-hourglass-split"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-inbox text-muted" style="font-size: 4rem;"></i>
+    <h5 class="mt-3 text-muted">لا يوجد مرضى بعد</h5>
+    <p class="text-muted">قم بإضافة أول مريض الآن</p>
+    <a href="{{ url_for('add_patient') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> إضافة مريض
+    </a>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}{{ patient.name }} - تفاصيل المريض{% endblock %}
+{% block nav_links %}
+<li class="nav-item"><a class="nav-link" href="{{ url_for('reception_dashboard') }}"><i class="bi bi-people-fill"></i> المرضى</a></li>
+{% endblock %}
+{% block role_indicator %}<i class="bi bi-person-lines-fill"></i> الاستقبال{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-person-fill text-primary"></i> بيانات المريض</h5>
+                <a href="{{ url_for('reception_dashboard') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-right"></i> العودة</a>
+            </div>
+            <div class="card-body p-4">
+                <!-- Basic Info -->
+                <div class="row mb-4">
+                    <div class="col-md-3 mb-2">
+                        <span class="text-muted small">اسم المريض</span>
+                        <h5 class="fw-bold">{{ patient.name }}</h5>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <span class="text-muted small">العمر</span>
+                        <h5 class="fw-bold">{{ patient.age or '—' }}</h5>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <span class="text-muted small">رقم الهاتف</span>
+                        <h5 class="fw-bold" dir="ltr">{{ patient.phone or '—' }}</h5>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <span class="text-muted small">العنوان</span>
+                        <h5 class="fw-bold">{{ patient.address or '—' }}</h5>
+                    </div>
+                </div>
+
+                <!-- Treatment Info -->
+                <div class="row mb-4">
+                    <div class="col-md-4 mb-2">
+                        <div class="card bg-light border-0">
+                            <div class="card-body text-center py-3">
+                                <span class="text-muted small">نوع العلاج</span>
+                                <div class="fw-bold fs-5 mt-1">{{ patient.treatment_type or '—' }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <div class="card bg-light border-0">
+                            <div class="card-body text-center py-3">
+                                <span class="text-muted small">الطبيب المعالج</span>
+                                <div class="fw-bold fs-5 mt-1">{{ patient.doctor_name or '—' }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <div class="card bg-light border-0">
+                            <div class="card-body text-center py-3">
+                                <span class="text-muted small">الممرضة المساعدة</span>
+                                <div class="fw-bold fs-5 mt-1">{{ patient.nurse_name or '—' }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Treatment Records -->
+                <div class="mb-4">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-journal-text"></i> السجل العلاجي</h6>
+                    {% if records %}
+                    <div class="timeline">
+                        {% for r in records %}
+                        <div class="d-flex mb-3">
+                            <div class="flex-shrink-0 text-center" style="width:80px;">
+                                <div class="badge bg-primary rounded-pill p-2" style="font-size:0.75rem;">
+                                    {{ r.record_date[:10] }}
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 me-3">
+                                <div class="card border-0 bg-light">
+                                    <div class="card-body py-2 px-3">
+                                        <p class="mb-1 fw-bold">{{ r.description }}</p>
+                                        <div class="small text-muted">
+                                            {% if r.doctor_name %}<i class="bi bi-person-badge"></i> طبيب: {{ r.doctor_name }}{% endif %}
+                                            {% if r.nurse_name %} | <i class="bi bi-person"></i> ممرضة: {{ r.nurse_name }}{% endif %}
+                                            {% if r.cost > 0 %} | <i class="bi bi-currency-dollar"></i> {{ r.cost|round(2) }}{% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted">لا توجد سجلات علاجية</p>
+                    {% endif %}
+                </div>
+
+                {% if patient.treatment_history %}
+                <div class="mb-4">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-file-text"></i> ملاحظات علاجية سابقة</h6>
+                    <div class="treatment-text">{{ patient.treatment_history }}</div>
+                </div>
+                {% endif %}
+
+                <!-- Financial -->
+                <h6 class="fw-bold mb-3"><i class="bi bi-currency-dollar"></i> الحساب المالي</h6>
+                <div class="card bg-light mb-4">
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="text-muted small">إجمالي الرسوم</div>
+                                <div class="fw-bold fs-5">{{ patient.total_fees|round(2) }}</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-muted small">المدفوع</div>
+                                <div class="fw-bold fs-5 text-success">{{ patient.amount_paid|round(2) }}</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-muted small">المتبقي</div>
+                                <div class="fw-bold fs-5 {% if patient.remaining == 0 %}text-success{% elif patient.remaining > 0 %}text-danger{% else %}text-warning{% endif %}">
+                                    {{ patient.remaining|round(2) }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row text-muted small">
+                    <div class="col-md-6">تاريخ التسجيل: {{ patient.created_at }}</div>
+                    <div class="col-md-6">آخر تحديث: {{ patient.updated_at }}</div>
+                </div>
+
+                <hr>
+                <div class="d-flex gap-2">
+                    {% if patient.locked == 0 %}
+                    <a href="{{ url_for('reception_edit_patient', patient_id=patient.id) }}" class="btn btn-warning"><i class="bi bi-pencil"></i> تعديل البيانات</a>
+                    {% elif patient.edit_requested == 0 %}
+                    <a href="{{ url_for('request_edit', patient_id=patient.id) }}" class="btn btn-outline-secondary" onclick="return confirm('هل تريد إرسال طلب تعديل للطبيب؟')"><i class="bi bi-lock"></i> طلب تعديل</a>
+                    {% else %}
+                    <button class="btn btn-outline-secondary" disabled><i class="bi bi-hourglass-split"></i> بانتظار موافقة الطبيب</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

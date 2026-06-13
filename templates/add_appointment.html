@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}{% if edit %}تعديل موعد{% else %}إضافة موعد جديد{% endif %}{% endblock %}
+{% block nav_links %}
+{% if session.role == 'reception' %}
+<li class="nav-item"><a class="nav-link" href="{{ url_for('reception_dashboard') }}"><i class="bi bi-people-fill"></i> المرضى</a></li>
+{% else %}
+<li class="nav-item"><a class="nav-link" href="{{ url_for('doctor_dashboard') }}"><i class="bi bi-speedometer2"></i> الرئيسية</a></li>
+{% endif %}
+<li class="nav-item"><a class="nav-link" href="{{ url_for('appointments_list') }}"><i class="bi bi-calendar-check"></i> المواعيد</a></li>
+{% endblock %}
+{% block role_indicator %}{{ session.display }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card {% if edit %}border-warning{% endif %}">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0">
+                    {% if edit %}
+                    <i class="bi bi-pencil text-warning"></i> تعديل الموعد
+                    {% else %}
+                    <i class="bi bi-plus-circle text-primary"></i> إضافة موعد جديد
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" autocomplete="off">
+                    <div class="mb-3 position-relative">
+                        <label class="form-label fw-bold">اسم المريض <span class="text-danger">*</span></label>
+                        <input type="text" name="patient_name" id="patientName"
+                               class="form-control form-control-lg"
+                               value="{{ patient_name }}"
+                               placeholder="اكتب اسم المريض (سيتم اقتراح الأسماء الموجودة)"
+                               required autofocus>
+                        <input type="hidden" name="patient_id" id="patientId" value="">
+                        <div id="suggestions" class="list-group position-absolute w-100 shadow-sm"
+                             style="z-index:1000;display:none;max-height:200px;overflow-y:auto;"></div>
+                        <div class="form-text">اكتب اسم المريض. إذا كان موجوداً سيظهر في القائمة، وإن لم يكن موجوداً سيتم إضافته تلقائياً.</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">التاريخ <span class="text-danger">*</span></label>
+                            <input type="date" name="appointment_date" class="form-control form-control-lg"
+                                   value="{{ app_date }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">الوقت</label>
+                            <input type="time" name="appointment_time" class="form-control form-control-lg"
+                                   value="{{ app_time }}">
+                        </div>
+                    </div>
+
+                    {% if edit %}
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">الحالة</label>
+                        <select name="status" class="form-select">
+                            <option value="scheduled" {% if status == 'scheduled' %}selected{% endif %}>مجدول</option>
+                            <option value="completed" {% if status == 'completed' %}selected{% endif %}>مكتمل</option>
+                            <option value="cancelled" {% if status == 'cancelled' %}selected{% endif %}>ملغي</option>
+                        </select>
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">ملاحظات</label>
+                        <textarea name="notes" class="form-control" rows="3">{{ notes }}</textarea>
+                    </div>
+
+                    <hr>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn {% if edit %}btn-warning{% else %}btn-primary{% endif %} btn-lg px-5">
+                            <i class="bi bi-check-lg"></i> {% if edit %}حفظ التعديلات{% else %}إضافة الموعد{% endif %}
+                        </button>
+                        <a href="{{ url_for('appointments_list') }}" class="btn btn-outline-secondary btn-lg px-4">
+                            <i class="bi bi-x-lg"></i> إلغاء
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function() {
+    var input = document.getElementById('patientName');
+    var hidden = document.getElementById('patientId');
+    var suggestions = document.getElementById('suggestions');
+    var timer = null;
+
+    input.addEventListener('input', function() {
+        clearTimeout(timer);
+        var val = this.value.trim();
+        hidden.value = '';
+        if (val.length < 1) {
+            suggestions.style.display = 'none';
+            return;
+        }
+        timer = setTimeout(function() {
+            fetch('/patients/search?q=' + encodeURIComponent(val))
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    suggestions.innerHTML = '';
+                    if (data.length === 0) {
+                        suggestions.style.display = 'none';
+                        return;
+                    }
+                    data.forEach(function(p) {
+                        var item = document.createElement('a');
+                        item.className = 'list-group-item list-group-item-action';
+                        item.href = '#';
+                        item.innerHTML = '<strong>' + p.name + '</strong>' +
+                            (p.phone ? ' <span class="text-muted small" dir="ltr">' + p.phone + '</span>' : '');
+                        item.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            input.value = p.name;
+                            hidden.value = p.id;
+                            suggestions.style.display = 'none';
+                        });
+                        suggestions.appendChild(item);
+                    });
+                    suggestions.style.display = 'block';
+                });
+        }, 300);
+    });
+
+    input.addEventListener('blur', function() {
+        setTimeout(function() { suggestions.style.display = 'none'; }, 200);
+    });
+
+    input.addEventListener('focus', function() {
+        if (suggestions.children.length > 0) {
+            suggestions.style.display = 'block';
+        }
+    });
+})();
+</script>
+{% endblock %}

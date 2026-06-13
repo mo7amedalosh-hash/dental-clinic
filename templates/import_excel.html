@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}استيراد ملف إكسيل{% endblock %}
+{% block nav_links %}
+<li class="nav-item">
+    <a class="nav-link" href="{{ url_for('doctor_dashboard') }}"><i class="bi bi-speedometer2"></i> الرئيسية</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link active" href="{{ url_for('import_excel') }}"><i class="bi bi-file-earmark-excel"></i> استيراد ملف</a>
+</li>
+{% endblock %}
+{% block role_indicator %}<i class="bi bi-person-badge-fill"></i> الطبيب{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0"><i class="bi bi-file-earmark-excel text-success"></i> استيراد بيانات من ملف إكسيل</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>طريقة الاستيراد:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>الملف يجب أن يكون بصيغة <code>.xlsx</code></li>
+                        <li>الصف الأول يجب أن يحتوي على عناوين الأعمدة</li>
+                        <li>النظام سيتعرف تلقائياً على الأعمدة التالية:
+                            <strong>الاسم</strong>، <strong>الهاتف</strong>، <strong>التاريخ العلاجي</strong>،
+                            <strong>إجمالي الرسوم</strong>، <strong>المدفوع</strong></li>
+                        <li>يمكن كتابة العناوين بالعربية أو الإنجليزية</li>
+                        <li>البيانات المكررة سيتم إضافتها كمرضى جدد</li>
+                    </ul>
+                </div>
+
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">اختر ملف الإكسيل</label>
+                        <input type="file" name="file" class="form-control form-control-lg"
+                               accept=".xlsx,.xls" required>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success btn-lg px-5">
+                            <i class="bi bi-upload"></i> استيراد البيانات
+                        </button>
+                        <a href="{{ url_for('doctor_dashboard') }}" class="btn btn-outline-secondary btn-lg px-4">
+                            <i class="bi bi-arrow-right"></i> العودة
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Sample Format -->
+        <div class="card mt-4">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0"><i class="bi bi-table"></i> مثال على تنسيق الملف المطلوب</h6>
+            </div>
+            <div class="card-body p-4">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm">
+                        <thead class="table-success">
+                            <tr>
+                                <th>الاسم</th>
+                                <th>الهاتف</th>
+                                <th>التاريخ العلاجي</th>
+                                <th>إجمالي الرسوم</th>
+                                <th>المدفوع</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>أحمد محمد</td>
+                                <td>0555123456</td>
+                                <td>كشف وتنظيف - 2024-01-15</td>
+                                <td>500</td>
+                                <td>500</td>
+                            </tr>
+                            <tr>
+                                <td>سارة علي</td>
+                                <td>0555987654</td>
+                                <td>حشو عصب - 2024-02-20</td>
+                                <td>1500</td>
+                                <td>1000</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-muted small mb-0">يمكنك استخدام أسماء أعمدة مختلفة، النظام سيتعرف عليها تلقائياً.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

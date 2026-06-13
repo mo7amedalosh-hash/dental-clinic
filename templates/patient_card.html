@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% block title %}{{ patient.name }} - بطاقة المريض{% endblock %}
+{% block nav_links %}
+<li class="nav-item"><a class="nav-link" href="{{ url_for('doctor_dashboard') }}"><i class="bi bi-speedometer2"></i> الرئيسية</a></li>
+{% endblock %}
+{% block role_indicator %}<i class="bi bi-person-badge-fill"></i> الطبيب{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-card-text text-success"></i> بطاقة المريض</h5>
+                <div class="d-flex gap-2 no-print">
+                    <a href="javascript:window.print()" class="btn btn-sm btn-outline-secondary" title="طباعة"><i class="bi bi-printer"></i></a>
+                    <a href="{{ url_for('edit_patient', patient_id=patient.id) }}" class="btn btn-sm btn-primary"><i class="bi bi-pencil"></i> تعديل</a>
+                    <a href="{{ url_for('doctor_dashboard') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-right"></i> العودة</a>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <!-- Patient Info -->
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <h3 class="fw-bold mb-1">{{ patient.name }}</h3>
+                        <div class="row mt-3">
+                            <div class="col-md-4 mb-2">
+                                <span class="text-muted small">رقم الهاتف</span>
+                                <div class="fw-bold" dir="ltr">{{ patient.phone or '—' }}</div>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <span class="text-muted small">العمر</span>
+                                <div class="fw-bold">{{ patient.age or '—' }}</div>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <span class="text-muted small">العنوان</span>
+                                <div class="fw-bold">{{ patient.address or '—' }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-md-start mt-2 mt-md-0">
+                        {% if patient.created_by == 'import' %}
+                        <span class="badge bg-secondary fs-6">مستورد من ملف</span>
+                        {% elif patient.created_by == 'doctor' %}
+                        <span class="badge bg-success fs-6">مسجل بواسطة الطبيب</span>
+                        {% else %}
+                        <span class="badge bg-primary fs-6">مسجل بواسطة الاستقبال</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Treatment Info -->
+                <div class="row mb-4">
+                    <div class="col-md-4 mb-2">
+                        <div class="card bg-light border-0">
+                            <div class="card-body text-center py-3">
+                                <span class="text-muted small">نوع العلاج</span>
+                                <div class="fw-bold fs-5 mt-1">{{ patient.treatment_type or '—' }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <div class="card bg-light border-0">
+                            <div class="card-body text-center py-3">
+                                <span class="text-muted small">الطبيب المعالج</span>
+                                <div class="fw-bold fs-5 mt-1">{{ patient.doctor_name or '—' }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <div class="card bg-light border-0">
+                            <div class="card-body text-center py-3">
+                                <span class="text-muted small">الممرضة المساعدة</span>
+                                <div class="fw-bold fs-5 mt-1">{{ patient.nurse_name or '—' }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Financial Summary -->
+                <h6 class="fw-bold mb-3"><i class="bi bi-currency-dollar"></i> الحساب المالي</h6>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="stat-card" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                            <h3>{{ patient.total_fees|round(2) }}</h3>
+                            <p>إجمالي الرسوم</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
+                            <h3>{{ patient.amount_paid|round(2) }}</h3>
+                            <p>المدفوع</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card" style="background: linear-gradient(135deg, #eb3349, #f45c43);">
+                            <h3>{{ patient.remaining|round(2) }}</h3>
+                            <p>المتبقي</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Treatment Records Timeline -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold mb-0"><i class="bi bi-journal-text"></i> السجل العلاجي</h6>
+                        <button class="btn btn-sm btn-primary no-print" data-bs-toggle="collapse" data-bs-target="#addRecordForm">
+                            <i class="bi bi-plus-circle"></i> إضافة سجل
+                        </button>
+                    </div>
+
+                    <!-- Add Record Form -->
+                    <div class="collapse mb-3 no-print" id="addRecordForm">
+                        <div class="card card-body bg-light">
+                            <form method="POST" action="{{ url_for('add_treatment_record', patient_id=patient.id) }}">
+                                <div class="row mb-2">
+                                    <div class="col-md-4">
+                                        <label class="form-label small">التاريخ</label>
+                                        <input type="date" name="record_date" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small">الطبيب</label>
+                                        <input type="text" name="doctor_name" class="form-control" placeholder="اسم الطبيب">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small">الممرضة</label>
+                                        <input type="text" name="nurse_name" class="form-control" placeholder="اسم الممرضة">
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">وصف العلاج <span class="text-danger">*</span></label>
+                                    <textarea name="description" class="form-control" rows="2" required placeholder="مثال: خلع ضرس العقل - حشو عصب - تركيب"></textarea>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">التكلفة</label>
+                                    <input type="number" name="cost" class="form-control" step="0.01" min="0" value="0">
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-check-lg"></i> حفظ</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Timeline -->
+                    {% if records %}
+                    <div class="timeline">
+                        {% for r in records %}
+                        <div class="d-flex mb-3">
+                            <div class="flex-shrink-0 text-center" style="width:80px;">
+                                <div class="badge bg-primary rounded-pill p-2" style="font-size:0.75rem;">
+                                    {{ r.record_date[:10] }}
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 me-3">
+                                <div class="card border-0 bg-light">
+                                    <div class="card-body py-2 px-3">
+                                        <p class="mb-1 fw-bold">{{ r.description }}</p>
+                                        <div class="small text-muted">
+                                            {% if r.doctor_name %}<i class="bi bi-person-badge"></i> الطبيب: {{ r.doctor_name }}{% endif %}
+                                            {% if r.nurse_name %} | <i class="bi bi-person"></i> الممرضة: {{ r.nurse_name }}{% endif %}
+                                            {% if r.cost > 0 %} | <i class="bi bi-currency-dollar"></i> التكلفة: {{ r.cost|round(2) }}{% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <a href="{{ url_for('delete_treatment_record', record_id=r.id) }}"
+                                   class="small text-danger no-print"
+                                   onclick="return confirm('حذف هذا السجل العلاجي؟')">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-light text-muted">لا توجد سجلات علاجية</div>
+                    {% endif %}
+                </div>
+
+                <!-- Old treatment history (backward compat) -->
+                {% if patient.treatment_history %}
+                <div class="mb-4">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-file-text"></i> ملاحظات علاجية سابقة</h6>
+                    <div class="treatment-text">{{ patient.treatment_history }}</div>
+                </div>
+                {% endif %}
+
+                {% if patient.notes %}
+                <div class="mb-4">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-sticky"></i> ملاحظات</h6>
+                    <div class="treatment-text" style="border-right-color: var(--bs-warning);">{{ patient.notes }}</div>
+                </div>
+                {% endif %}
+
+                <div class="row text-muted small mt-4 pt-3 border-top">
+                    <div class="col-md-6"><i class="bi bi-calendar-plus"></i> تاريخ التسجيل: {{ patient.created_at }}</div>
+                    <div class="col-md-6"><i class="bi bi-calendar-check"></i> آخر تحديث: {{ patient.updated_at }}</div>
+                </div>
+
+                <div class="d-flex gap-2 mt-4 no-print">
+                    <a href="{{ url_for('edit_patient', patient_id=patient.id) }}" class="btn btn-primary btn-lg px-5"><i class="bi bi-pencil"></i> تعديل البيانات</a>
+                    <a href="{{ url_for('doctor_dashboard') }}" class="btn btn-outline-secondary btn-lg"><i class="bi bi-arrow-right"></i> العودة للقائمة</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

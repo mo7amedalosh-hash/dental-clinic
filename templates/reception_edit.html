@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}تعديل بيانات {{ patient.name }}{% endblock %}
+{% block nav_links %}
+<li class="nav-item">
+    <a class="nav-link" href="{{ url_for('reception_dashboard') }}"><i class="bi bi-people-fill"></i> المرضى</a>
+</li>
+{% endblock %}
+{% block role_indicator %}<i class="bi bi-person-lines-fill"></i> الاستقبال{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark py-3">
+                <h5 class="mb-0"><i class="bi bi-pencil"></i> تعديل بيانات المريض</h5>
+                <small>تم منحك الإذن بالتعديل من قبل الطبيب</small>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" onsubmit="return validateForm()">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">اسم المريض <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control form-control-lg" value="{{ patient.name }}" required autofocus>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">العمر</label>
+                            <input type="text" name="age" class="form-control" value="{{ patient.age }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">رقم الهاتف</label>
+                            <input type="text" name="phone" class="form-control" value="{{ patient.phone }}" dir="ltr">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">العنوان</label>
+                        <input type="text" name="address" class="form-control" value="{{ patient.address }}">
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">نوع العلاج</label>
+                            <input type="text" name="treatment_type" class="form-control" value="{{ patient.treatment_type }}" placeholder="مثال: زراعة أسنان - حشو - خلع">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">اسم الطبيب</label>
+                            <input type="text" name="doctor_name" class="form-control" value="{{ patient.doctor_name }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">اسم الممرضة</label>
+                            <input type="text" name="nurse_name" class="form-control" value="{{ patient.nurse_name }}">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">التاريخ العلاجي</label>
+                        <textarea name="treatment_history" class="form-control" rows="4">{{ patient.treatment_history }}</textarea>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">إجمالي الرسوم</label>
+                            <input type="number" name="total_fees" id="totalFees" class="form-control" step="0.01" min="0" value="{{ patient.total_fees }}" oninput="calcRemaining()">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">المدفوع</label>
+                            <input type="number" name="amount_paid" id="amountPaid" class="form-control" step="0.01" min="0" value="{{ patient.amount_paid }}" oninput="calcRemaining()">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">المتبقي</label>
+                            <input type="text" id="remainingDisplay" class="form-control" value="{{ patient.remaining|round(2) }}" readonly style="font-weight:700;color:var(--bs-danger);">
+                        </div>
+                    </div>
+
+                    <hr>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-warning btn-lg px-5"><i class="bi bi-check-lg"></i> حفظ التعديلات</button>
+                        <a href="{{ url_for('reception_dashboard') }}" class="btn btn-outline-secondary btn-lg px-4"><i class="bi bi-x-lg"></i> إلغاء</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function calcRemaining() {
+    var fees = parseFloat(document.getElementById('totalFees').value) || 0;
+    var paid = parseFloat(document.getElementById('amountPaid').value) || 0;
+    document.getElementById('remainingDisplay').value = (fees - paid).toFixed(2);
+}
+function validateForm() {
+    var name = document.querySelector('input[name="name"]').value.trim();
+    if (!name) { alert('الرجاء إدخال اسم المريض'); return false; }
+    return true;
+}
+</script>
+{% endblock %}

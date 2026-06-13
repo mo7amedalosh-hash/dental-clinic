@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}المواعيد{% endblock %}
+{% block nav_links %}
+{% if session.role == 'reception' %}
+<li class="nav-item"><a class="nav-link" href="{{ url_for('reception_dashboard') }}"><i class="bi bi-people-fill"></i> المرضى</a></li>
+{% else %}
+<li class="nav-item"><a class="nav-link" href="{{ url_for('doctor_dashboard') }}"><i class="bi bi-speedometer2"></i> الرئيسية</a></li>
+{% endif %}
+<li class="nav-item"><a class="nav-link active" href="{{ url_for('appointments_list') }}"><i class="bi bi-calendar-check"></i> المواعيد</a></li>
+{% endblock %}
+{% block role_indicator %}{{ session.display }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-calendar-check"></i> إدارة المواعيد</h4>
+        <p class="text-muted mb-0 small">عرض وإدارة مواعيد المرضى</p>
+    </div>
+    <a href="{{ url_for('add_appointment') }}" class="btn btn-primary btn-lg">
+        <i class="bi bi-plus-circle"></i> إضافة موعد
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="btn-group w-100" role="group">
+            <a href="{{ url_for('appointments_list', filter='today') }}"
+               class="btn btn-lg {% if filter_type == 'today' %}btn-info text-white{% else %}btn-outline-info{% endif %}">
+                <i class="bi bi-calendar-day"></i> اليوم
+            </a>
+            <a href="{{ url_for('appointments_list', filter='upcoming') }}"
+               class="btn btn-lg {% if filter_type == 'upcoming' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                <i class="bi bi-calendar-week"></i> القادمة
+            </a>
+            <a href="{{ url_for('appointments_list', filter='all') }}"
+               class="btn btn-lg {% if filter_type == 'all' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+                <i class="bi bi-list"></i> الكل
+            </a>
+        </div>
+    </div>
+</div>
+
+{% if appointments %}
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>المريض</th>
+                        <th>التاريخ</th>
+                        <th>الوقت</th>
+                        <th>ملاحظات</th>
+                        <th>الحالة</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in appointments %}
+                    {% set is_today = a.appointment_date == today %}
+                    {% set is_past = a.appointment_date < today and a.status == 'scheduled' %}
+                    <tr class="{% if is_today %}table-info{% elif is_past %}table-light text-muted{% endif %}">
+                        <td>{{ a.id }}</td>
+                        <td>
+                            <a href="{% if session.role == 'doctor' %}{{ url_for('patient_card', patient_id=a.patient_id) }}{% else %}{{ url_for('reception_patient_detail', patient_id=a.patient_id) }}{% endif %}"
+                               class="patient-name-link">
+                                {{ a.patient_name }}
+                            </a>
+                        </td>
+                        <td class="fw-bold">{{ a.appointment_date }}</td>
+                        <td>{{ a.appointment_time|time12 }}</td>
+                        <td class="small text-muted">{{ a.notes or '' }}</td>
+                        <td>
+                            {% if a.status == 'scheduled' %}
+                                {% if is_past %}
+                                <span class="badge bg-secondary">فات</span>
+                                {% elif is_today %}
+                                <span class="badge bg-info">اليوم</span>
+                                {% else %}
+                                <span class="badge bg-primary">مجدول</span>
+                                {% endif %}
+                            {% elif a.status == 'completed' %}
+                            <span class="badge bg-success">مكتمل</span>
+                            {% else %}
+                            <span class="badge bg-danger">ملغي</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="action-bar">
+                                {% if a.status == 'scheduled' %}
+                                <a href="{{ url_for('complete_appointment', appt_id=a.id) }}"
+                                   class="btn btn-sm btn-outline-success" title="تأكيد اكتمال الموعد"
+                                   onclick="return confirm('تأكيد اكتمال موعد {{ a.patient_name }}؟')">
+                                    <i class="bi bi-check-lg"></i>
+                                </a>
+                                {% endif %}
+                                <a href="{{ url_for('edit_appointment', appt_id=a.id) }}"
+                                   class="btn btn-sm btn-outline-primary" title="تعديل">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{{ url_for('delete_appointment', appt_id=a.id) }}"
+                                   class="btn btn-sm btn-outline-danger" title="حذف"
+                                   onclick="return confirm('حذف الموعد؟')">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-calendar-x text-muted" style="font-size: 4rem;"></i>
+    <h5 class="mt-3 text-muted">لا توجد مواعيد</h5>
+    <p class="text-muted">
+        {% if filter_type == 'today' %}لا توجد مواعيد اليوم
+        {% elif filter_type == 'upcoming' %}لا توجد مواعيد قادمة
+        {% else %}لم يتم إضافة أي مواعيد بعد{% endif %}
+    </p>
+    <a href="{{ url_for('add_appointment') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> إضافة موعد
+    </a>
+</div>
+{% endif %}
+{% endblock %}
